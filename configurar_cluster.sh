@@ -54,6 +54,46 @@ while read p; do
             echo "Perfil de configuración erróneo. No existe el servicio solicitado en línea $COUNT" >& 2
             exit 1
         fi
+
+        # Extraer el nombre del fichero de configuración
+        read -r -a array <<< "$p"
+        echo ${array[0]}
+        echo ${array[1]}
+        echo ${array[2]}
+
+        CONT=0
+        for LINEA in `cat ${array[2]}`
+        do
+            CONT=$((CONT + 1))
+            VAR[$CONT]=$LINEA
+            echo ${VAR[$CONT]}
+        done
+
+        NUML=$(wc -l ${array[2]} | cut -d' ' -f1)
+        #quedarme solo con el numero
+        echo $NUML
+        exit 0
+
+        #Saber que fichero debo de leer y que tengo que hacer $1 por nombre
+        case "$1" in
+            mount)
+                if (( $CONT == 2  )); then
+                    Mo ${VAR[2]}
+                else
+                    echo "El fichero contiene mas lineas de las especificadas"
+                fi
+                ;;
+            raid)
+                if (( $NUML == 3  )); then
+                    Raid ${VAR[3]}
+                else
+                    echo "El fichero contiene mas lineas de las especificadas"
+                fi
+                ;;
+            *)
+                ;;
+        esac
+
     fi
 
 done <$PERFIL_CONFIGURACION
