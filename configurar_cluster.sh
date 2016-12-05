@@ -15,7 +15,7 @@ function Mo(){
     echo ""
 
     if $( ssh -oStrictHostKeyChecking=no $IP "test -d $2" ); then
-        if $( ssh $IP "test $(ls -A $2)" ); then
+        if [ $( ssh $IP "ls -A $2" ) ]; then
             echo "Error. El punto de montaje $2 no es un directorio vacío." >&2
             return 1
         else
@@ -27,8 +27,10 @@ function Mo(){
     fi
 
     # Escribir el fichero /etc/fstab
+    ssh $IP "echo '$1 $2 ext3 defaults 0 0' >> /etc/fstab"
     echo "Montando todos los dispositivos"
-    $( ssh $IP "mount -a" )
+    #formatear mkfs.ext3 /dev/sdb
+    ssh $IP "mount -a"
 
     echo "--- Terminando servicio mount --------------------"
     exit 0
@@ -118,7 +120,7 @@ while read p; do
                     Mo ${VAR[1]} ${VAR[2]}
                     set +e
                 else
-                    echo "El fichero contiene mas lineas de las especificadas"
+                    echo "Error de sintaxis: El fichero NO contiene las lineas especificadas"
                 fi
                 ;;
             raid)
