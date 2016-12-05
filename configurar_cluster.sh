@@ -57,35 +57,34 @@ while read p; do
 
         # Extraer el nombre del fichero de configuración
         read -r -a array <<< "$p"
-        echo ${array[0]}
-        echo ${array[1]}
-        echo ${array[2]}
-
+        IP=${array[0]}
+        COMANDO=${array[1]}
         CONT=0
+
         for LINEA in `cat ${array[2]}`
         do
             CONT=$((CONT + 1))
             VAR[$CONT]=$LINEA
-            echo ${VAR[$CONT]}
         done
 
         NUML=$(wc -l ${array[2]} | cut -d' ' -f1)
-        #quedarme solo con el numero
-        echo $NUML
-        exit 0
 
         #Saber que fichero debo de leer y que tengo que hacer $1 por nombre
-        case "$1" in
+        case "$COMANDO" in
             mount)
                 if (( $CONT == 2  )); then
-                    Mo ${VAR[2]}
+                    set -e
+                    Mo ${VAR[1]} ${VAR[2]}
+                    set +e
                 else
                     echo "El fichero contiene mas lineas de las especificadas"
                 fi
                 ;;
             raid)
                 if (( $NUML == 3  )); then
+                    set -e
                     Raid ${VAR[3]}
+                    set +e
                 else
                     echo "El fichero contiene mas lineas de las especificadas"
                 fi
@@ -93,10 +92,10 @@ while read p; do
             *)
                 ;;
         esac
-
     fi
 
 done <$PERFIL_CONFIGURACION
 
+echo "Terminando operación sin errores"
 # Sin errores
-exit 1
+exit 0
