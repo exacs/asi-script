@@ -1,4 +1,45 @@
 #!/bin/bash
+
+############################################################
+#
+# MOUNT - fichero de dos lineas
+#
+############################################################
+### $1 = nombre-del-dispositivo
+### $2 = punto-de-montaje
+function Mo(){
+    echo "--- Servicio mount -------------------------------"
+    echo "máquina:          $IP"
+    echo "dispositivo:      $1"
+    echo "punto de montaje: $2"
+    echo ""
+
+    if $( ssh -oStrictHostKeyChecking=no $IP "test -d $2" ); then
+        if $( ssh $IP "test $(ls -A $2)" ); then
+            echo "Error. El punto de montaje $2 no es un directorio vacío." >&2
+            return 1
+        else
+            echo "Directorio $2 vacío. Válido."
+        fi
+    else
+        echo "El punto de montaje no existe. Creando directorio $2"
+        $( ssh $IP "mkdir $2")
+    fi
+
+    # Escribir el fichero /etc/fstab
+    echo "Montando todos los dispositivos"
+    $( ssh $IP "mount -a" )
+
+    echo "--- Terminando servicio mount --------------------"
+    exit 0
+}
+
+
+############################################################
+#
+# PRINCIPAL.
+#
+############################################################
 # Comprobar que el número de argumentos es exactamente 1
 if [ ! $1 ]; then
     echo 'Uso: configurar_cluster.sh perfil_de_configuracion' >&2
