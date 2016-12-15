@@ -27,16 +27,76 @@ function Mo(){
     fi
 
     # Escribir el fichero /etc/fstab
+    echo "Editando el fichero /etc/fstab para hacer permanente el montaje"
     ssh $IP "echo '$1 $2 ext3 defaults 0 0' >> /etc/fstab"
     echo "Montando todos los dispositivos"
-    #formatear mkfs.ext3 /dev/sdb
     ssh $IP "mount -a"
 
     echo "--- Terminando servicio mount --------------------"
     exit 0
 }
 
+############################################################
+#
+# LMV - fichero de dos o más lineas
+#
+############################################################
+### $1 = nombre-del-dispositivo
+### $2 = punto-de-montaje
+function Log(){
+  echo "en ello"
+}
 
+############################################################
+#
+# Backup Server - fichero de una linea
+#
+############################################################
+### $1 = directorio-donde-se-realiza-el-backup
+function BackSer(){
+  echo "--- Servicio backup_server -------------------------------"
+  echo "máquina:          $IP"
+  echo "directorio:       $1"
+  echo ""
+
+  #Comprobar que el directorio existe
+  if $( ssh -oStrictHostKeyChecking=no $IP "test -d $1" ); then
+      if [ $( ssh $IP "ls -A $1" ) ]; then
+          echo "Error. El directorio $1 NO es un directorio vacío." >&2
+          return 1
+      else
+          echo "Directorio $1 vacío. Válido."
+      fi
+  else
+      echo "El directorio donde se desea realiza el backup del servidor no existe."
+  fi
+
+  echo "--- Terminando servicio backup_server --------------------"
+  exit 0
+}
+
+############################################################
+#
+# Backup Cliente - fichero de cuatro lineas
+#
+############################################################
+### $1 = ruta-del-directorio-del-que-se-desea-hacer-backup
+### $2 = direccion-del-servidor-de-backup
+### $3 = ruta-de-directorio-destino-del-backup
+### $4 = periodicidad-del-backup-en-horas
+function BackCli(){
+  echo "--- Servicio backup_client -------------------------------"
+  echo "máquina:          $IP"
+  echo "directorio:       $1"
+  echo "directorio:       $2"
+  echo "directorio:       $3"
+  echo "directorio:       $4"
+  echo ""
+
+
+  echo "--- Terminando servicio backup_client --------------------"
+  exit 0
+}
 ############################################################
 #
 # PRINCIPAL.
@@ -104,32 +164,61 @@ while read p; do
         COMANDO=${array[1]}
         CONT=0
 
+        # Leer fichero de configuración  array[2]
         for LINEA in `cat ${array[2]}`
         do
             CONT=$((CONT + 1))
-            VAR[$CONT]=$LINEA
+            VAR[$CONT]=$LINEA    #contenido de la línea
         done
 
+        # Guardar solo el número de líneas
         NUML=$(wc -l ${array[2]} | cut -d' ' -f1)
 
-        #Saber que fichero debo de leer y que tengo que hacer $1 por nombre
+        # Saber que fichero debo de leer y que tengo que hacer $1 por nombre
         case "$COMANDO" in
             mount)
-                if (( $CONT == 2  )); then
+                if (( $NUML == 2  )); then
                     set -e
-                    Mo ${VAR[1]} ${VAR[2]}
+                    Mo ${VAR[1]} ${VAR[2]}    #función que ejecuta mount
                     set +e
                 else
-                    echo "Error de sintaxis: El fichero NO contiene las lineas especificadas"
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene DOS lineas para MOUNT"
                 fi
                 ;;
             raid)
                 if (( $NUML == 3  )); then
                     set -e
-                    Raid ${VAR[3]}
+                    Raid ${VAR[3]}    #función que ejecua mdam
                     set +e
                 else
-                    echo "El fichero contiene mas lineas de las especificadas"
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene TRES lineas para RAID"
+                fi
+                ;;
+            lvm)
+                if (( $NUML -gt 2 )); then
+                   set -e
+                   Log ${VAR[3]}    #función que ejecua lvm
+                   set +e
+                else
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene DOS o más lineas para LVM"
+                fi
+                ;;
+            backup_server)
+                if (( $NUML == 1 )); then
+                   set -e
+                   BackSer ${VAR[1]}    #función que ejecua backup_server
+                   set +e
+                else
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene UNA linea para BACKUP_SERVER"
+                fi
+                ;;
+            backup_client)
+                if (( $NUML == 4 )); then
+                   set -e
+                   BackCli ${VAR[1]} ${VAR[2]} ${VAR[3]} ${VAR[4]}    #función que ejecua backup_client
+                   set +e
+                else
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene CUATRO lineas para BACKUP_CLIENT"
                 fi
                 ;;
             *)
