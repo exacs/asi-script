@@ -36,6 +36,22 @@ function Mo(){
     exit 0
 }
 
+############################################################
+#
+# RAID - fichero de 3 líneas
+#
+############################################################
+### $1 = nombre-del-nuevo-dispositivo-raid
+### $2 = nivel-de-raid
+### $3 = dispositivo-1  dispositivo-2... (separado por espacios)
+function Raid(){
+    echo "--- Servicio raid --------------------------------"
+    echo "máquina:                $IP"
+    echo "nuevo dispositivo RAID: $1"
+    echo "nivel de RAID:          $2"
+    echo ""
+
+}
 
 ############################################################
 #
