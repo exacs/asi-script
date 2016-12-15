@@ -50,6 +50,59 @@ function Raid(){
     echo "nuevo dispositivo RAID: $1"
     echo "nivel de RAID:          $2"
     echo "dispositivos:           $3"
+    echo ""
+
+    WORDS=( $3 )
+    NUMERO_DISPOSITIVOS=${#WORDS[@]}
+
+    # Comprobar nivel de RAID (0 ~ 6)
+    if [ $2 -gt 6 ] && [ $2 -lt 0 ]; then
+        echo "El nivel de RAID especificado no es válido." >&2
+        return 1
+    fi
+
+    # Comprobar que existen todos los dispositivos
+    for dispositivo in $3; do
+        if $( ssh $IP "test -e $dispositivo" ); then
+            echo "Dispositivo \"$dispositivo\" existe"
+        else
+            echo "ERROR: El dispositivo \"$dispositivo\" no existe" >&2
+            return 1
+        fi
+    done
+
+
+    # Instalar mdadm
+    echo "Instalando mdadm"
+    set +e
+    ssh $IP "sudo aptitude install mdadm" > /dev/null
+
+    if [ $? -ne 0 ]; then
+       set -e
+       echo "Error en la instalación" >&2
+       return 1
+    fi
+
+    set -e
+    echo "Instalación terminada"
+
+    # Crear vector RAID
+    echo "Creando RAID"
+
+    set +e
+    ssh $IP "mdadm --create $1 --level=$2 --force --raid-devices=$NUMERO_DISPOSITIVOS $3"
+
+    if [ $? -ne 0 ]; then
+        set -e
+        echo "Error creando RAID" >&2
+        return 1
+    fi
+    set -e
+
+    return 0
+    echo "RAID creado con exito"
+
+    # Guardar la configuración
 }
 
 ############################################################
