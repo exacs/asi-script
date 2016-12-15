@@ -203,7 +203,7 @@ while read p; do
             raid)
                 if (( $NUML == 3  )); then
                     set -e
-                    Raid ${VAR[3]}    #función que ejecua mdam
+                    Raid ${VAR[1]} ${VAR[2]} "${VAR[3]}"    #función que ejecua mdam
                     set +e
                 else
                     echo "Error de sintaxis: El fichero de perfil de servicio NO contiene TRES lineas para RAID"
