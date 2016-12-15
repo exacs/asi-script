@@ -181,11 +181,10 @@ while read p; do
         CONT=0
 
         # Leer fichero de configuración  array[2]
-        for LINEA in `cat ${array[2]}`
-        do
+        while IFS= read line; do
             CONT=$((CONT + 1))
-            VAR[$CONT]=$LINEA    #contenido de la línea
-        done
+            VAR[$CONT]=$line    #contenido de la línea
+        done < ${array[2]}
 
         # Guardar solo el número de líneas
         NUML=$(wc -l ${array[2]} | cut -d' ' -f1)
