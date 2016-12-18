@@ -101,8 +101,6 @@ function Raid(){
 
     return 0
     echo "RAID creado con exito"
-
-    # Guardar la configuración
 }
 
 ############################################################
@@ -115,6 +113,60 @@ function Raid(){
 function Log(){
   echo "en ello"
 }
+
+############################################################
+#
+# Servidor NIS - fichero de una línea
+#
+############################################################
+### $1 = nombre-de-dominio-nis
+function NisSer(){
+    echo "--- Servicio Servidor NIS --------------------------------"
+    echo "máquina:            $IP"
+    echo "nombre del dominio: $1"
+    echo ""
+}
+
+
+############################################################
+#
+# Cliente NIS - fichero de dos líneas
+#
+############################################################
+### $1 = nombre-de-dominio-nis
+### $2 = servidor-nis-al-que-se-desea-conectar
+function NisCli(){
+    echo "--- Servicio Servidor NIS --------------------------------"
+    echo "máquina:                    $IP"
+    echo "nombre del dominio:         $1"
+    echo "dirección del servidor NIS: $2"
+    echo ""
+}
+
+############################################################
+#
+# Servidor NFS - fichero de N líneas
+#
+############################################################
+### Cada línea es una ruta-de-directorio-exportado
+function NfsSer(){
+    echo "--- Servicio Servidor NIS --------------------------------"
+    echo "máquina:            $IP"
+    echo ""
+}
+
+
+############################################################
+#
+# Cliente NIS - fichero de N líneas
+#
+############################################################
+### Cada línea es ip-servidor ruta-de-directorio punto-de-montaje
+function NfsCli(){
+    echo "--- Servicio Servidor NIS --------------------------------"
+    echo ""
+}
+
 
 ############################################################
 #
