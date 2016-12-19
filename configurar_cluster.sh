@@ -125,6 +125,27 @@ function NisSer(){
     echo "máquina:            $IP"
     echo "nombre del dominio: $1"
     echo ""
+
+    echo "Instalando paquete nis"
+    set +e
+    ssh $IP "sudo aptitude -y -q install nis" > /dev/null
+
+    if [ $? -ne 0 ]; then
+        set -e
+        echo "Error en la instalación" >&2
+        return 1
+    fi
+
+    set -e
+
+    echo "Definiendo nombre del dominio"
+    ssh $IP "nisdomainname $1"
+
+    echo "Reiniciando demonio NIS"
+    ssh $IP "sudo /etc/init.d/nis restart"
+
+    echo "Servidor NIS configurado con éxito"
+    return 0
 }
 
 
@@ -136,11 +157,32 @@ function NisSer(){
 ### $1 = nombre-de-dominio-nis
 ### $2 = servidor-nis-al-que-se-desea-conectar
 function NisCli(){
-    echo "--- Servicio Servidor NIS --------------------------------"
+    echo "--- Servicio Cliente NIS --------------------------------"
     echo "máquina:                    $IP"
     echo "nombre del dominio:         $1"
     echo "dirección del servidor NIS: $2"
     echo ""
+
+    echo "Instalando paquete nis"
+    set +e
+    ssh $IP "sudo aptitude -y -q install nis" > /dev/null
+
+    if [ $? -ne 0 ]; then
+        set -e
+        echo "Error en la instalación" >&2
+        return 1
+    fi
+
+    set -e
+    echo "Añadiendo nombre de dominio"
+    ssh $IP "echo 'domain $1 server $2' >> /etc/yp.conf"
+
+    echo "Permitiendo que el usuario 'practicas' se conecte"
+    ssh $IP "sed -i 's/passwd:[ ]*compat/passwd:         nis compat/' /etc/nsswitch.conf"
+    ssh $IP "sed -i 's/group[ ]*compat/group:          nis compat/' /etc/nsswitch.conf"
+    ssh $IP "sed -i 's/shadow:[ ]*compat/shadow:         nis compat/' /etc/nsswitch.conf"
+
+    echo "--- Terminando servicio Cliente NIS  --------------------"
 }
 
 ############################################################
@@ -273,7 +315,7 @@ while read p; do
         fi
 
         # Comprobar que la segunda palabra es un comando válido
-        echo $p | egrep -q '^.+ (mount|raid|lvm|nis_client|nfs_server|nfs_client|backup_server|backup_client) .+$'
+        echo $p | egrep -q '^.+ (mount|raid|lvm|nis_server|nis_client|nfs_server|nfs_client|backup_server|backup_client) .+$'
         if [ $? -ne 0 ]; then
             echo "Perfil de configuración erróneo. No existe el servicio solicitado en línea $COUNT" >& 2
             exit 1
@@ -321,6 +363,26 @@ while read p; do
                    set +e
                 else
                     echo "Error de sintaxis: El fichero de perfil de servicio NO contiene DOS o más lineas para LVM"
+                fi
+                ;;
+            nis_server)
+                if (( $NUML == 1 )); then
+                    set -e
+                    NisSer ${VAR[1]}
+                    set +e
+                else
+                    echo $NUML
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene UNA línea"
+                    exit 1
+                fi
+                ;;
+            nis_client)
+                if (( $NUML == 2 )); then
+                    set -e
+                    NisCli ${VAR[1]} ${VAR[2]}
+                    set +e
+                else
+                    echo "Error de sintaxis: El fichero de perfil de servicio NO contiene DOS líneas"
                 fi
                 ;;
             backup_server)
